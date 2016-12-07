@@ -22,3 +22,4 @@ Things to do:
 2. Make the intent dynamic 
 3. make chat templates more user friendly.
 
+URL to get chat console : http://localhost:8080/DoEngine/bot 
