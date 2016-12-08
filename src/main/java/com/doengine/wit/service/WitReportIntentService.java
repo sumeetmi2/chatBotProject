@@ -16,10 +16,12 @@ import org.springframework.stereotype.Service;
 
 import com.doengine.common.CommonUtils;
 import com.doengine.common.RestUtils;
+import com.doengine.talentpool.objects.TalentPoolCriteriaObject;
+import com.doengine.talentpool.objects.TalentPoolReportDateCriteria;
+import com.doengine.talentpool.objects.TalentPoolReportObject;
+import com.doengine.talentpool.objects.TalentPoolReportUserCriteria;
 import com.doengine.wit.misc.WitContextObject;
 import com.doengine.wit.misc.WitEntity;
-import com.doengine.wit.misc.WitReportCriteria;
-import com.doengine.wit.misc.WitReportObject;
 import com.doengine.wit.misc.WitResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -54,39 +56,42 @@ public class WitReportIntentService implements WitPerformActionIntentService {
      */
     @Override
     public void performAction(WitResponse response) throws Exception {
-	WitEntity intentEntity = response.getEntities().get("intent")[0];
-	String intent = intentEntity.getValue();
-	Class<?> c = this.getClass();
-	Method method = c.getDeclaredMethod(intent, WitResponse.class);
-	method.invoke(this, response);
+	WitEntity[] reportTypeEntity = response.getEntities().get("report_type");
+	if (reportTypeEntity != null && reportTypeEntity.length > 0) {
+	    String intent = commonUtils.getReportTagKeyMap(reportTypeEntity[0].getValue().trim());
+	    Class<?> c = this.getClass();
+	    Method method = c.getDeclaredMethod(intent, WitResponse.class);
+	    method.invoke(this, response);
+	}
     }
 
     public void recruiter_activity_summary(WitResponse response) throws Exception {
 	WitEntity intent = response.getEntities().get("intent")[0];
-	WitReportObject reportObject = new WitReportObject();
+	TalentPoolReportObject reportObject = new TalentPoolReportObject();
 	ObjectMapper objectMapper = new ObjectMapper();
 	//the report names need to be in upper case
 	reportObject.setType(intent.getValue().toUpperCase());
-	reportObject.setCriterias(extractCriterias(response));
+	reportObject.setCriterias(extractDateCriterias(response));
 	String jsonBody = objectMapper.writeValueAsString(reportObject);
+	//uncomment below url when integrating with talentpool
+	//	String response1 = restUtils.postCallTalentPool(environment.getRequiredProperty("talentpool.report.url"), jsonBody);
 	String response1 = restUtils.postCallTalentPool(environment.getRequiredProperty("talentpool.report.url"), jsonBody);
-	System.out.println(response1);
+	response.setMsg(formResponse(response1, jsonBody, intent.getValue()));
     }
 
     /**
      * @param response
      * @return
      */
-    private List<WitReportCriteria> extractCriterias(WitResponse response) {
-	List<WitReportCriteria> criterias = new ArrayList<>();
+    private List<TalentPoolCriteriaObject> extractDateCriterias(WitResponse response) {
+	List<TalentPoolCriteriaObject> criterias = new ArrayList<>();
 	WitEntity[] dateTimes = response.getEntities().get("datetime");
-	if (dateTimes!=null && dateTimes.length > 0) {
+	if (dateTimes != null && dateTimes.length > 0) {
 	    WitEntity dateTime = dateTimes[0];
 	    if ("interval".equals(dateTime.getType())) {
-		WitReportCriteria criteria = new WitReportCriteria();
+		TalentPoolReportDateCriteria criteria = new TalentPoolReportDateCriteria();
 		criteria.setTo(commonUtils.convertWitToTalentPoolReportDateFormat(dateTime.getTo().getValue()));
 		criteria.setFrom(commonUtils.convertWitToTalentPoolReportDateFormat(dateTime.getFrom().getValue()));
-		criteria.setType("dateCriteria");
 		criterias.add(criteria);
 	    } else if ("value".equals(dateTime.getType())) {
 		//set custom interval
@@ -95,8 +100,41 @@ public class WitReportIntentService implements WitPerformActionIntentService {
 	return criterias;
     }
 
-    public void pending_task(WitResponse response) {
-
+    public void pending_tasks(WitResponse response) throws Exception {
+	WitEntity intent = response.getEntities().get("intent")[0];
+	TalentPoolReportObject reportObject = new TalentPoolReportObject();
+	ObjectMapper objectMapper = new ObjectMapper();
+	//the report names need to be in upper case
+	reportObject.setType(intent.getValue().toUpperCase());
+	reportObject.setCriterias(createUserCriteria(response));
+	String jsonBody = objectMapper.writeValueAsString(reportObject);
+	//uncomment below url when hitting talentpool
+	//	String response1 = restUtils.postCallTalentPool(environment.getRequiredProperty("talentpool.report.url1"), jsonBody);
+	String response1 = restUtils.postCallTalentPool(environment.getRequiredProperty("talentpool.report.url1"), null);
+	response.setMsg(formResponse(response1, jsonBody, intent.getValue()));
     }
 
+    private String formResponse(String downloadurl, String criteria, String reportName) {
+	StringBuilder sb = new StringBuilder();
+	sb.append("Downloadlink: ").append("<a href=\"" + downloadurl + "\">" + downloadurl + "</a>");
+	sb.append("<br/>");
+	sb.append("ReportName: ").append(reportName);
+	sb.append("<br/>");
+	sb.append("Criteria: ").append(criteria);
+	sb.append("<br/>");
+	return sb.toString();
+    }
+
+    private List<TalentPoolCriteriaObject> createUserCriteria(WitResponse response) {
+	List<TalentPoolCriteriaObject> criterias = new ArrayList<>();
+	WitEntity[] ids = response.getEntities().get("number");
+	TalentPoolReportUserCriteria userCriteria = new TalentPoolReportUserCriteria();
+	if (ids != null && ids.length > 0) {
+	    for (WitEntity id : ids) {
+		userCriteria.getUsers().add(Integer.parseInt(id.getValue()));
+	    }
+	    criterias.add(userCriteria);
+	}
+	return criterias;
+    }
 }

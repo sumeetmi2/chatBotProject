@@ -49,7 +49,7 @@ public class WitResponseParser {
 	if (responseObj.getEntities().get("intent") != null) {
 	    for (WitEntity entity : responseObj.getEntities().get("intent")) {
 		try {
-		    intents.add(TalentpoolIntent.find(entity.getValue()));
+		    intents.add(TalentpoolIntent.valueOf(entity.getValue().toUpperCase()));
 		} catch (IllegalArgumentException e) {
 		    LOGGER.error("add intent to enum constants :" + entity.getValue());
 		    throw e;

@@ -37,7 +37,7 @@ public class WitActionBasedServiceFactory {
 	switch(actionType){
 	    case WitConstants.MSG: return witMessageActionType;
 	    case WitConstants.ACTION: return witActionActionType;
-	    case WitConstants.END: return witEndActionType;
+	    case WitConstants.STOP: return witEndActionType;
 	    case WitConstants.FEEDBACK: return witFeedbackActionType; 
 	    case WitConstants.MERGE: break;
 	}

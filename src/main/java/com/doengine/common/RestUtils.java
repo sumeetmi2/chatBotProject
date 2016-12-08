@@ -41,6 +41,17 @@ public class RestUtils {
 	return response.getBody();
     }
     
+    public String getCall(String url,String jsonBody){
+   	RestTemplate restTemplate = new RestTemplate();
+   	HttpHeaders headers = new HttpHeaders();
+   	headers.set("Authorization", "Bearer "+ environment.getRequiredProperty("wit.parser.service.auth.key"));
+   	headers.set("accept", "application/json");
+   	headers.set("content-type", "application/json");
+   	HttpEntity<?> httpEntity = new HttpEntity<Object>(jsonBody, headers);
+   	ResponseEntity<String> response =  restTemplate.exchange(url, HttpMethod.GET, httpEntity, String.class);
+   	return response.getBody();
+       }
+    
     public String postCallTalentPool(String url,String jsonBody){
 	loginToTalentPool();
 	RestTemplate restTemplate = new RestTemplate();

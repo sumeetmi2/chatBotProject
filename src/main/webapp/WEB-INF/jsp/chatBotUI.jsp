@@ -53,7 +53,7 @@
 				<c:forEach items="${chats}" var="chat" varStatus="vs">
 					<form:input type ="hidden" path="chats[${vs.index}].message" value="${chat.message}"/>
 					<form:input type ="hidden" path="chats[${vs.index}].id" value="${chat.id}"/>
-					${chat.id}:${chat.message}<br/>
+					<b>${chat.id}</b>:${chat.message}<br/>
 				</c:forEach>
 			</td>
 			</tr>

@@ -35,8 +35,10 @@ public class WitGreetingsIntentService implements WitIntentService {
     public WitContextObject updateContext(WitResponse response) throws Exception {
 	WitContextObject contextObj = new WitContextObject();
 	Class<?> c = this.getClass();
-	Method method = c.getDeclaredMethod(response.getAction(), WitResponse.class, WitContextObject.class);
-	method.invoke(this, response, contextObj);
+	if (response.getAction() != null && response.getAction().length() > 0) {
+	    Method method = c.getDeclaredMethod(response.getAction(), WitResponse.class, WitContextObject.class);
+	    method.invoke(this, response, contextObj);
+	}
 	return contextObj;
     }
 
@@ -47,14 +49,14 @@ public class WitGreetingsIntentService implements WitIntentService {
      *        implemented in wit ai console
      */
     private void greetingsHuman(WitResponse response, WitContextObject contextObj) {
-	if (response.getEntities().size() > 0 && response.getEntities().get("contact") !=null) {
+	if (response.getEntities().size() > 0 && response.getEntities().get("contact") != null) {
 	    String contact = response.getEntities().get("contact")[0].getValue();
-	    if(contact!=null){
+	    if (contact != null) {
 		contextObj.addToContext("name", contact);
 	    }
-	}else {
+	} else {
 	    contextObj.addToContext("missingName", "true");
-	    
+
 	}
     }
 

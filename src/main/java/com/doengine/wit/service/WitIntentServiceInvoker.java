@@ -48,6 +48,7 @@ public class WitIntentServiceInvoker {
      * @throws Exception
      */
     public String invokeService(Bot bot, WitContextObject contextObject, String serviceUrl, WitResponse outputWitResponse) throws Exception {
+	String response =null;
 	WitResponse witResponse = witResponseParser.parse(bot.getResponse());
 	EnumSet<TalentpoolIntent> intents = witResponseParser.getIntent(witResponse);
 	TalentpoolIntent intent = intents.iterator().next();
@@ -55,6 +56,7 @@ public class WitIntentServiceInvoker {
 	if (witIntentService instanceof WitPerformActionIntentService) {
 	    witIntentService = (WitPerformActionIntentService) witIntentService;
 	    ((WitPerformActionIntentService) witIntentService).performAction(witResponse);
+	    response= witResponse.getMsg();
 	}
 	WitContextObject tmp = null;
 	tmp = witIntentService.updateContext(witResponse);
@@ -62,7 +64,6 @@ public class WitIntentServiceInvoker {
 	    contextObject = tmp;
 	}
 	if (serviceUrl != null && serviceUrl.length() > 0) {
-	    String response = null;
 	    if (contextObject != null && contextObject.getContextMap().size() > 0) {
 		response = restUtils.postCall(serviceUrl, jsonBuilder.mapToJsonString(contextObject.getContextMap()));
 	    } else {
@@ -73,6 +74,6 @@ public class WitIntentServiceInvoker {
 	    bot.setActionType(outputWitResponse.getType());
 	    return outputWitResponse.getMsg();
 	}
-	return null;
+	return response;
     }
 }
